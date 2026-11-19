@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大語言模型應用｜多工協作的一天</title>
+<style>
+  :root{
+    --bg1:#070b16; --bg2:#121a33; --ink:#e8ecf7; --muted:#8a94b3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--bg1);
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--ink)}
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{position:relative;width:1600px;height:900px;flex:none;transform-origin:center center;
+    background:radial-gradient(ellipse 80% 60% at 50% 38%, #1c2a55 0%, var(--bg2) 40%, var(--bg1) 80%);
+    overflow:hidden}
+
+  /* ---------- 標題 ---------- */
+  .title{position:absolute;left:56px;top:40px;z-index:30}
+  .title small{display:block;font-size:15px;letter-spacing:.35em;color:#7fa2ff;margin-bottom:8px}
+  .title h1{font-size:38px;font-weight:800;letter-spacing:.04em}
+  .title p{margin-top:8px;color:var(--muted);font-size:16px}
+  .stats{position:absolute;right:56px;top:44px;z-index:30;display:flex;gap:28px;text-align:right}
+  .stats div b{display:block;font-size:30px;font-variant-numeric:tabular-nums;color:#fff}
+  .stats div span{font-size:13px;color:var(--muted);letter-spacing:.1em}
+
+  /* ---------- 背景光點 ---------- */
+  .dust{position:absolute;width:3px;height:3px;border-radius:50%;background:#9db6ff;opacity:.0;
+    animation:float 9s linear infinite}
+  @keyframes float{0%{transform:translateY(0);opacity:0}15%{opacity:.6}100%{transform:translateY(-500px);opacity:0}}
+
+  /* ---------- 螢幕弧形排列 ---------- */
+  .scene3d{position:absolute;left:0;top:0;width:100%;height:100%;perspective:1000px;perspective-origin:50% 40%}
+  .arc{position:absolute;left:50%;top:400px;transform-style:preserve-3d;transform:translateZ(600px)}
+  .monitor{position:absolute;width:420px;height:320px;left:-210px;top:-160px;
+    transform-style:preserve-3d}
+  .screen{position:absolute;inset:0;border-radius:14px;background:#0e1424;overflow:hidden;
+    border:3px solid #2a3350;display:flex;flex-direction:column;
+    box-shadow:0 0 0 1px #000, 0 0 60px -6px var(--glow), 0 30px 60px -20px #000}
+  .screen.active{border-color:var(--accent);box-shadow:0 0 0 1px #000,0 0 90px 0 var(--glow)}
+  .stand{position:absolute;left:50%;bottom:-70px;width:16px;height:70px;margin-left:-8px;
+    background:linear-gradient(#2a3350,#151b2e)}
+  .stand::after{content:"";position:absolute;left:-50px;bottom:-6px;width:116px;height:10px;border-radius:6px;background:#1a2138}
+
+  .hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#141b30;border-bottom:1px solid #222b45}
+  .logo{width:22px;height:22px;border-radius:7px;background:var(--accent);display:grid;place-items:center;
+    font-size:12px;font-weight:800;color:#0b0f1a}
+  .hdr .name{font-weight:700;font-size:15px}
+  .hdr .model{margin-left:auto;font-size:11px;color:var(--muted);border:1px solid #2b3555;padding:2px 8px;border-radius:20px}
+  .hdr .live{width:8px;height:8px;border-radius:50%;background:#2a3350}
+  .screen.active .live{background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+
+  .chat{flex:1;overflow:hidden;padding:12px 12px 4px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.55}
+  .msg{max-width:88%;padding:7px 10px;border-radius:10px;animation:pop .25s ease-out}
+  @keyframes pop{from{transform:translateY(8px);opacity:0}}
+  .msg.user{align-self:flex-end;background:#26304f;border-bottom-right-radius:3px}
+  .msg.ai{align-self:flex-start;background:transparent;border-left:2px solid var(--accent);border-radius:2px;padding:2px 0 2px 10px;max-width:95%}
+  .msg.ai p{margin:2px 0}
+  .msg.ai li{margin-left:16px}
+  .msg.ai pre{background:#070a13;border:1px solid #232c47;border-radius:6px;padding:6px 8px;margin:4px 0;
+    font-family:"JetBrains Mono",Consolas,monospace;font-size:11.5px;color:#a8e6b4;white-space:pre-wrap}
+  .caret{display:inline-block;width:7px;height:13px;background:var(--accent);vertical-align:-2px;margin-left:1px;animation:blink .8s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .thinking{display:flex;gap:4px;align-items:center;color:var(--muted);font-size:12px}
+  .thinking i{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:dot 1s infinite}
+  .thinking i:nth-child(2){animation-delay:.15s}.thinking i:nth-child(3){animation-delay:.3s}
+  @keyframes dot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-4px);opacity:1}}
+
+  .input{margin:6px 10px 10px;padding:7px 10px;border-radius:10px;background:#141b30;border:1px solid #232c47;
+    font-size:12px;color:#c9d2ec;min-height:32px;display:flex;align-items:center}
+  .input .ph{color:#56607f}
+
+  /* ---------- 桌面 ---------- */
+  .desk{position:absolute;left:-100px;right:-100px;bottom:0;height:230px;z-index:5;
+    background:linear-gradient(180deg,#1b2340 0%,#0d1222 35%,#070a14 100%);
+    border-top:2px solid #2c3963;box-shadow:0 -20px 80px -10px rgba(110,140,255,.25)}
+  .mug{position:absolute;right:300px;bottom:118px;width:48px;height:54px;background:#d9dde8;border-radius:4px 4px 10px 10px;z-index:7}
+  .mug::after{content:"";position:absolute;right:-16px;top:12px;width:18px;height:22px;border:5px solid #d9dde8;border-left:none;border-radius:0 12px 12px 0}
+  .steam{position:absolute;bottom:56px;width:6px;height:30px;border-radius:6px;background:rgba(255,255,255,.25);filter:blur(3px);animation:steam 2.4s ease-in infinite}
+  @keyframes steam{0%{transform:translateY(10px) scaleY(.6);opacity:0}40%{opacity:.8}100%{transform:translateY(-30px) translateX(6px) scaleY(1.3);opacity:0}}
+  .note{position:absolute;bottom:128px;z-index:7;width:74px;height:66px;padding:7px;font-size:11px;line-height:1.3;color:#3a2e00;
+    background:#ffe27a;box-shadow:0 6px 14px rgba(0,0,0,.4)}
+
+  /* ---------- 人物 ---------- */
+  #person{position:absolute;left:50%;bottom:-6px;width:620px;margin-left:-310px;z-index:10;
+    filter:drop-shadow(0 -6px 40px rgba(120,150,255,.25))}
+  #head{transform-box:fill-box;transform-origin:50% 90%;transition:transform .6s cubic-bezier(.5,1.6,.5,1)}
+  #torso{transform-box:fill-box;transform-origin:50% 100%;animation:breath 3.5s ease-in-out infinite}
+  @keyframes breath{50%{transform:scale(1.012,1.008)}}
+  .armL{transform-box:fill-box;transform-origin:80% 0%;animation:typeL .22s ease-in-out infinite alternate}
+  .armR{transform-box:fill-box;transform-origin:20% 0%;animation:typeR .19s ease-in-out infinite alternate}
+  @keyframes typeL{to{transform:translateY(-6px) rotate(-1.5deg)}}
+  @keyframes typeR{to{transform:translateY(-7px) rotate(1.5deg)}}
+  .armR.reach{animation:reach 1.1s ease-in-out}
+  @keyframes reach{40%,60%{transform:translate(70px,-90px) rotate(-14deg)}}
+  .sweat{opacity:0}
+  .sweat.on{animation:drop 1.2s ease-in forwards}
+  @keyframes drop{0%{opacity:0;transform:translateY(0)}20%{opacity:1}100%{opacity:0;transform:translateY(26px)}}
+
+  /* ---------- 浮出的回應提示 ---------- */
+  .toast{position:absolute;z-index:25;padding:7px 13px;border-radius:30px;font-size:13px;font-weight:600;white-space:nowrap;
+    background:rgba(16,22,40,.92);border:1px solid var(--accent);color:#fff;box-shadow:0 0 22px -4px var(--accent);
+    animation:rise 2.6s ease-out forwards;pointer-events:none}
+  @keyframes rise{0%{transform:translate(-50%,10px) scale(.8);opacity:0}15%{transform:translate(-50%,0) scale(1);opacity:1}
+    75%{opacity:1}100%{transform:translate(-50%,-70px);opacity:0}}
+  .bubble{position:absolute;z-index:26;left:50%;top:395px;transform:translateX(-50%);font-size:14px;
+    background:#fff;color:#111;padding:6px 12px;border-radius:14px;opacity:0;transition:opacity .3s}
+  .bubble::after{content:"";position:absolute;left:50%;bottom:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0;margin-left:-8px}
+  .bubble.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="stage">
+
+  <div class="title">
+    <small>LLM APPLICATIONS · 2026</small>
+    <h1>大語言模型應用：一人多 AI 的工作日常</h1>
+    <p>同時與多個模型協作——寫作、程式、分析、翻譯、推理</p>
+  </div>
+  <div class="stats">
+    <div><b id="sConv">0</b><span>進行中對話</span></div>
+    <div><b id="sTok">0</b><span>已生成 Tokens</span></div>
+    <div><b id="sDone">0</b><span>完成任務</span></div>
+  </div>
+
+  <div class="scene3d"><div class="arc" id="arc"></div></div>
+
+  <div class="desk"></div>
+  <div class="note" style="left:250px;transform:rotate(-6deg)">✔ 週報<br>✔ 修 bug<br>☐ 簡報<br>☐ 合約</div>
+  <div class="note" style="left:340px;transform:rotate(5deg);background:#9ef0c4">提示詞<br>要寫清楚！</div>
+  <div class="mug"><div class="steam" style="left:12px"></div><div class="steam" style="left:26px;animation-delay:.8s"></div></div>
+
+  <div class="bubble" id="bubble">等等…這個也要！</div>
+
+  <!-- 人物（背影） -->
+  <svg id="person" viewBox="0 0 620 420" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="shirt" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#3b4a7a"/><stop offset="1" stop-color="#1c2442"/>
+      </linearGradient>
+      <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2a2320"/><stop offset="1" stop-color="#120e0c"/>
+      </linearGradient>
+      <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#8fb0ff" stop-opacity=".55"/><stop offset=".25" stop-color="#8fb0ff" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <!-- 椅背 -->
+    <path d="M150 420 L170 250 Q310 215 450 250 L470 420 Z" fill="#141a2c" stroke="#262f4d" stroke-width="3"/>
+    <!-- 手臂 -->
+    <g class="armL"><path d="M205 255 L130 315 L178 212" fill="none" stroke="#2c3860" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse cx="184" cy="204" rx="22" ry="12" fill="#e3b48f"/></g>
+    <g class="armR" id="armR"><path d="M415 255 L490 315 L442 212" fill="none" stroke="#2c3860" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse cx="436" cy="204" rx="22" ry="12" fill="#e3b48f"/></g>
+    <!-- 鍵盤 -->
+    <rect x="200" y="196" width="220" height="22" rx="5" fill="#0c1020" stroke="#4a63b8" stroke-width="1.5" opacity=".9"/>
+    <!-- 身體 -->
+    <g id="torso">
+      <path d="M160 420 Q150 270 210 225 Q260 200 310 200 Q360 200 410 225 Q470 270 460 420 Z" fill="url(#shirt)"/>
+      <path d="M160 420 Q150 270 210 225 Q260 200 310 200 Q360 200 410 225 Q470 270 460 420 Z" fill="url(#rim)"/>
+      <path d="M310 215 L310 420" stroke="#151c33" stroke-width="3" opacity=".6"/>
+      <!-- 脖子 -->
+      <rect x="288" y="176" width="44" height="36" rx="12" fill="#c99a78"/>
+    </g>
+    <!-- 頭 -->
+    <g id="head">
+      <ellipse cx="256" cy="140" rx="11" ry="17" fill="#d8a985"/>
+      <ellipse cx="364" cy="140" rx="11" ry="17" fill="#d8a985"/>
+      <ellipse cx="310" cy="125" rx="56" ry="66" fill="url(#hair)"/>
+      <path d="M258 110 Q270 52 318 58 Q368 62 364 118" fill="none" stroke="#3a302b" stroke-width="5" opacity=".7"/>
+      <path d="M262 92 Q300 64 352 86" fill="none" stroke="#8fb0ff" stroke-width="3" opacity=".45"/>
+      <!-- 耳機 -->
+      <path d="M250 128 Q252 48 310 50 Q368 48 370 128" fill="none" stroke="#11141f" stroke-width="9"/>
+      <rect x="240" y="118" width="18" height="34" rx="8" fill="#1b2034" stroke="#6f8cff" stroke-width="1.5"/>
+      <rect x="362" y="118" width="18" height="34" rx="8" fill="#1b2034" stroke="#6f8cff" stroke-width="1.5"/>
+      <!-- 汗滴 -->
+      <path class="sweat" id="sweat" d="M378 92 q7 12 0 16 q-7 -4 0 -16z" fill="#9fd4ff"/>
+    </g>
+  </svg>
+
+</div>
+</div>
+
+<script>
+/* ---------------- 畫面縮放 ---------------- */
+const stage=document.getElementById('stage');
+function fit(){const s=Math.min(innerWidth/1600,innerHeight/900);stage.style.transform=`scale(${s})`;}
+addEventListener('resize',fit);fit();
+
+/* ---------------- 背景光點 ---------------- */
+for(let i=0;i<40;i++){const d=document.createElement('div');d.className='dust';
+  d.style.left=Math.random()*1600+'px';d.style.top=(300+Math.random()*600)+'px';
+  d.style.animationDelay=(-Math.random()*9)+'s';d.style.animationDuration=(7+Math.random()*6)+'s';stage.appendChild(d);}
+
+/* ---------------- 各 LLM 介面與對話腳本 ---------------- */
+const APPS=[
+ {name:'ChatGPT',mark:'G',model:'寫作助理',accent:'#19c37d',convs:[
+   {q:'幫我寫一封給客戶的延期通知信，語氣客氣',a:[['p','您好：'],['p','感謝貴公司長期支持。因上游零件供應延遲，原定 12/5 的交貨日將調整至 12/12。'],['p','造成不便深感抱歉，我們將每日回報進度。']],toast:'✉️ 信件草稿完成'},
+   {q:'把剛剛那封翻成英文',a:[['p','Dear Customer,'],['p','Due to an upstream supply delay, delivery will move from Dec 5 to Dec 12. We sincerely apologize and will share daily updates.']],toast:'🌐 翻譯完成'},
+   {q:'給我 3 個新產品的命名點子',a:[['li','「輕巧 Lumo」— 強調輕量'],['li','「Nova 智控」— 科技感'],['li','「拾光 Hikari」— 溫暖品牌形象']],toast:'💡 命名提案 ×3'}]},
+ {name:'Claude',mark:'C',model:'程式 / 長文件',accent:'#e0895a',convs:[
+   {q:'這段 Python 太慢了，幫我重構',a:[['p','用字典取代巢狀迴圈，複雜度由 O(n²) 降到 O(n)：'],['code','lookup = {r.id: r for r in rows}\nfor o in orders:\n    o.row = lookup.get(o.rid)'],['p','實測 10 萬筆約快 40 倍。']],toast:'⚡ 程式重構完成'},
+   {q:'審閱這份 30 頁合約，列出風險條款',a:[['li','第 7.2 條：違約金無上限'],['li','第 12 條：自動續約需提前 90 天通知'],['li','第 15 條：管轄法院為對方所在地']],toast:'⚖️ 找到 3 項風險'},
+   {q:'幫這個函式寫單元測試',a:[['code','def test_parse_date():\n    assert parse("2026-11-20").year == 2026'],['p','另外補了空字串與錯誤格式的邊界測試。']],toast:'🧪 測試已產生'}]},
+ {name:'Gemini',mark:'✦',model:'多模態分析',accent:'#7b8cff',convs:[
+   {q:'這張產線照片有什麼異常？',a:[['p','影像分析結果：'],['li','右側輸送帶有一處料件歪斜'],['li','第 3 工位警示燈為黃燈'],['p','建議先檢查定位治具。']],toast:'🖼️ 影像分析完成'},
+   {q:'把這份 PDF 報告摘要成 5 點',a:[['li','營收年增 12%'],['li','毛利率改善 1.8 個百分點'],['li','海外市場占比首度過半'],['li','研發投入持續增加'],['li','下季展望保守']],toast:'📄 摘要完成'},
+   {q:'把會議錄音轉成重點紀錄',a:[['p','決議：'],['li','Q1 上線新版本'],['li','由 Amy 負責測試排程'],['p','待辦 4 項已整理成清單。']],toast:'🎙️ 會議紀錄完成'}]},
+ {name:'Copilot',mark:'⌘',model:'Office 協作',accent:'#2bc4c4',convs:[
+   {q:'在 Excel 算出每季成長率',a:[['p','在 C2 輸入：'],['code','=(B2-A2)/A2'],['p','往下填滿並設定為百分比格式即可。']],toast:'📊 公式已套用'},
+   {q:'把這份資料做成 10 頁簡報',a:[['p','已建立簡報大綱：'],['li','1. 市場概況'],['li','2. 競品比較'],['li','3. 策略與時程'],['p','共 10 頁，含 4 張圖表。']],toast:'🗂️ 簡報已建立'},
+   {q:'整理本週 Outlook 未讀信件重點',a:[['li','2 封需今日回覆'],['li','1 個會議改期至週三'],['li','供應商報價已更新']],toast:'📬 收件匣整理完成'}]},
+ {name:'DeepSeek',mark:'D',model:'推理 / 數學',accent:'#4d8bff',convs:[
+   {q:'解 x² − 5x + 6 = 0',a:[['p','因式分解：(x − 2)(x − 3) = 0'],['p','所以 x = 2 或 x = 3。']],toast:'🧮 推理完成'},
+   {q:'板厚 1.2mm、K=0.4，90° 折彎展開長度？',a:[['p','中性層半徑 = R + K·t'],['code','BA = (π/2)·(R + 0.4×1.2)'],['p','代入內 R 即可得折彎補償值。']],toast:'📐 計算完成'},
+   {q:'比較兩個排程方案哪個交期較短',a:[['p','逐步推理：方案 A 關鍵路徑 18 天，方案 B 為 15 天。'],['p','結論：選擇方案 B，可提前 3 天。']],toast:'🧠 方案建議完成'}]},
+];
+
+const arc=document.getElementById('arc');
+const STEP=-20, R=1300;
+const panels=APPS.map((app,i)=>{
+  const ang=(i-(APPS.length-1)/2)*STEP;
+  const m=document.createElement('div');m.className='monitor';
+  m.style.transform=`rotateY(${ang}deg) translateZ(${-R}px) translateY(${Math.abs(i-2)*-10}px)`;
+  m.style.setProperty('--accent',app.accent);m.style.setProperty('--glow',app.accent+'55');
+  m.innerHTML=`<div class="stand"></div><div class="screen">
+    <div class="hdr"><div class="logo">${app.mark}</div><div class="name">${app.name}</div><div class="live"></div><div class="model">${app.model}</div></div>
+    <div class="chat"></div><div class="input"><span class="ph">輸入訊息…</span></div></div>`;
+  arc.appendChild(m);
+  return {app,i,ang,el:m,screen:m.querySelector('.screen'),chat:m.querySelector('.chat'),input:m.querySelector('.input'),k:0};
+});
+
+/* ---------------- 工具 ---------------- */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+let tokens=0,done=0,activeCount=0;
+const sTok=document.getElementById('sTok'),sDone=document.getElementById('sDone'),sConv=document.getElementById('sConv');
+function upd(){sTok.textContent=tokens.toLocaleString();sDone.textContent=done;sConv.textContent=activeCount;}
+
+/* 人物轉頭看向剛有動靜的螢幕 */
+const head=document.getElementById('head');
+function look(p){head.style.transform=`translateX(${-p.ang*1.1}px) rotate(${-p.ang*0.45}deg)`;}
+
+function scrollDown(p){p.chat.scrollTop=p.chat.scrollHeight;
+  while(p.chat.scrollHeight>p.chat.clientHeight+4&&p.chat.children.length>2){p.chat.removeChild(p.chat.firstChild);}}
+
+async function typeInput(p,text){
+  p.input.innerHTML='';const span=document.createElement('span');p.input.appendChild(span);
+  const c=document.createElement('span');c.className='caret';p.input.appendChild(c);
+  for(const ch of text){span.textContent+=ch;await sleep(rnd(30,70));}
+  await sleep(250);p.input.innerHTML='<span class="ph">輸入訊息…</span>';
+}
+
+async function stream(p,segs){
+  const box=document.createElement('div');box.className='msg ai';p.chat.appendChild(box);
+  const caret=document.createElement('span');caret.className='caret';
+  let ul=null;
+  for(const [t,s] of segs){
+    let el;
+    if(t==='li'){if(!ul){ul=document.createElement('ul');box.appendChild(ul);}el=document.createElement('li');ul.appendChild(el);}
+    else{ul=null;el=document.createElement(t==='code'?'pre':'p');box.appendChild(el);}
+    let i=0;
+    while(i<s.length){const n=Math.ceil(rnd(1,3));el.textContent+=s.slice(i,i+n);i+=n;
+      el.appendChild(caret);tokens+=n;upd();scrollDown(p);await sleep(rnd(18,55));}
+  }
+  caret.remove();
+}
+
+function toast(p,text){
+  const r=p.screen.getBoundingClientRect(),sr=stage.getBoundingClientRect(),sc=sr.width/1600;
+  const t=document.createElement('div');t.className='toast';t.textContent=text;
+  t.style.setProperty('--accent',p.app.accent);
+  t.style.left=((r.left+r.width/2-sr.left)/sc)+'px';t.style.top=((r.top-sr.top)/sc-14)+'px';
+  stage.appendChild(t);setTimeout(()=>t.remove(),2700);
+}
+
+/* 偶爾伸手、冒汗、喃喃自語 */
+const armR=document.getElementById('armR'),sweat=document.getElementById('sweat'),bubble=document.getElementById('bubble');
+const LINES=['等等…這個也要！','好，下一個','先複製貼上…','這個回答不錯！','咖啡呢？☕','再生成一次','誰先回我？'];
+setInterval(()=>{armR.classList.remove('reach');void armR.offsetWidth;armR.classList.add('reach');},5200);
+setInterval(()=>{sweat.classList.remove('on');void sweat.getBoundingClientRect();sweat.classList.add('on');},3800);
+setInterval(()=>{bubble.textContent=LINES[Math.floor(Math.random()*LINES.length)];bubble.classList.add('show');
+  setTimeout(()=>bubble.classList.remove('show'),1800);},4300);
+
+/* ---------------- 每個介面的循環 ---------------- */
+async function loop(p){
+  await sleep(p.i*900+rnd(0,600));
+  while(true){
+    const c=p.app.convs[p.k%p.app.convs.length];p.k++;
+    look(p);
+    await typeInput(p,c.q);
+    const u=document.createElement('div');u.className='msg user';u.textContent=c.q;p.chat.appendChild(u);scrollDown(p);
+    activeCount++;upd();p.screen.classList.add('active');
+    const th=document.createElement('div');th.className='thinking';th.innerHTML='<i></i><i></i><i></i>&nbsp;思考中';
+    p.chat.appendChild(th);scrollDown(p);
+    await sleep(rnd(700,1800));th.remove();
+    await stream(p,c.a);
+    p.screen.classList.remove('active');activeCount--;done++;upd();
+    toast(p,c.toast);
+    await sleep(rnd(1200,3200));
+  }
+}
+panels.forEach(loop);
+</script>
+</body>
+</html>
