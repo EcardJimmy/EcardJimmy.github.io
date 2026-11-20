@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大語言模型應用｜AI 在等人類</title>
+<style>
+  :root{
+    --bg1:#070b16; --bg2:#121a33; --ink:#e8ecf7; --muted:#8a94b3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--bg1);
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--ink)}
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{position:relative;width:1600px;height:900px;flex:none;transform-origin:center center;
+    background:radial-gradient(ellipse 80% 60% at 50% 38%, #1c2a55 0%, var(--bg2) 40%, var(--bg1) 80%);
+    overflow:hidden}
+
+  /* ---------- 標題 ---------- */
+  .title{position:absolute;left:56px;top:40px;z-index:30}
+  .title small{display:block;font-size:15px;letter-spacing:.35em;color:#7fa2ff;margin-bottom:8px}
+  .title h1{font-size:38px;font-weight:800;letter-spacing:.04em}
+  .title p{margin-top:8px;color:var(--muted);font-size:16px}
+  .stats{position:absolute;right:56px;top:44px;z-index:30;display:flex;gap:28px;text-align:right}
+  .stats div b{display:block;font-size:30px;font-variant-numeric:tabular-nums;color:#fff}
+  .stats div span{font-size:13px;color:var(--muted);letter-spacing:.1em}
+
+  /* ---------- 背景光點 ---------- */
+  .dust{position:absolute;width:3px;height:3px;border-radius:50%;background:#9db6ff;opacity:.0;
+    animation:float 9s linear infinite}
+  @keyframes float{0%{transform:translateY(0);opacity:0}15%{opacity:.6}100%{transform:translateY(-500px);opacity:0}}
+
+  /* ---------- 螢幕弧形排列 ---------- */
+  .scene3d{position:absolute;left:0;top:0;width:100%;height:100%;perspective:1000px;perspective-origin:50% 40%}
+  .arc{position:absolute;left:50%;top:400px;transform-style:preserve-3d;transform:translateZ(600px)}
+  .monitor{position:absolute;width:420px;height:320px;left:-210px;top:-160px;
+    transform-style:preserve-3d}
+  .screen{position:absolute;inset:0;border-radius:14px;background:#0e1424;overflow:hidden;
+    border:3px solid #2a3350;display:flex;flex-direction:column;
+    box-shadow:0 0 0 1px #000, 0 0 60px -6px var(--glow), 0 30px 60px -20px #000}
+  .screen.active{border-color:var(--accent);box-shadow:0 0 0 1px #000,0 0 90px 0 var(--glow)}
+  .stand{position:absolute;left:50%;bottom:-70px;width:16px;height:70px;margin-left:-8px;
+    background:linear-gradient(#2a3350,#151b2e)}
+  .stand::after{content:"";position:absolute;left:-50px;bottom:-6px;width:116px;height:10px;border-radius:6px;background:#1a2138}
+
+  .hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#141b30;border-bottom:1px solid #222b45}
+  .logo{width:22px;height:22px;border-radius:7px;background:var(--accent);display:grid;place-items:center;
+    font-size:12px;font-weight:800;color:#0b0f1a}
+  .hdr .name{font-weight:700;font-size:15px}
+  .hdr .model{margin-left:auto;font-size:11px;color:var(--muted);border:1px solid #2b3555;padding:2px 8px;border-radius:20px}
+  .hdr .live{width:8px;height:8px;border-radius:50%;background:#2a3350}
+  .screen.active .live{background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+
+  .chat{flex:1;overflow:hidden;padding:12px 12px 4px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.55}
+  .msg{max-width:88%;padding:7px 10px;border-radius:10px;animation:pop .25s ease-out}
+  @keyframes pop{from{transform:translateY(8px);opacity:0}}
+  .msg.user{align-self:flex-end;background:#26304f;border-bottom-right-radius:3px}
+  .msg.ai{align-self:flex-start;background:transparent;border-left:2px solid var(--accent);border-radius:2px;padding:2px 0 2px 10px;max-width:95%}
+  .msg.ai p{margin:2px 0}
+  .msg.ai li{margin-left:16px}
+  .msg.ai pre{background:#070a13;border:1px solid #232c47;border-radius:6px;padding:6px 8px;margin:4px 0;
+    font-family:"JetBrains Mono",Consolas,monospace;font-size:11.5px;color:#a8e6b4;white-space:pre-wrap}
+  .caret{display:inline-block;width:7px;height:13px;background:var(--accent);vertical-align:-2px;margin-left:1px;animation:blink .8s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .thinking{display:flex;gap:4px;align-items:center;color:var(--muted);font-size:12px}
+  .thinking i{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:dot 1s infinite}
+  .thinking i:nth-child(2){animation-delay:.15s}.thinking i:nth-child(3){animation-delay:.3s}
+  @keyframes dot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-4px);opacity:1}}
+
+  .input{margin:6px 10px 10px;padding:7px 10px;border-radius:10px;background:#141b30;border:1px solid #232c47;
+    font-size:12px;color:#c9d2ec;min-height:32px;display:flex;align-items:center}
+  .input .ph{color:#56607f}
+
+  /* ---------- 桌面 ---------- */
+  .desk{position:absolute;left:-100px;right:-100px;bottom:0;height:230px;z-index:5;
+    background:linear-gradient(180deg,#1b2340 0%,#0d1222 35%,#070a14 100%);
+    border-top:2px solid #2c3963;box-shadow:0 -20px 80px -10px rgba(110,140,255,.25)}
+  .mug{position:absolute;right:300px;bottom:118px;width:48px;height:54px;background:#d9dde8;border-radius:4px 4px 10px 10px;z-index:7}
+  .mug::after{content:"";position:absolute;right:-16px;top:12px;width:18px;height:22px;border:5px solid #d9dde8;border-left:none;border-radius:0 12px 12px 0}
+  .steam{position:absolute;bottom:56px;width:6px;height:30px;border-radius:6px;background:rgba(255,255,255,.25);filter:blur(3px);animation:steam 2.4s ease-in infinite}
+  @keyframes steam{0%{transform:translateY(10px) scaleY(.6);opacity:0}40%{opacity:.8}100%{transform:translateY(-30px) translateX(6px) scaleY(1.3);opacity:0}}
+  .note{position:absolute;bottom:128px;z-index:7;width:74px;height:66px;padding:7px;font-size:11px;line-height:1.3;color:#3a2e00;
+    background:#ffe27a;box-shadow:0 6px 14px rgba(0,0,0,.4)}
+
+  /* ---------- 人物 ---------- */
+  #person{position:absolute;left:50%;bottom:-6px;width:620px;margin-left:-310px;z-index:10;
+    filter:drop-shadow(0 -6px 40px rgba(120,150,255,.25))}
+  #head{transform-box:fill-box;transform-origin:50% 95%;animation:nod 4.2s ease-in-out infinite}
+  @keyframes nod{0%,8%{transform:none}50%{transform:translateY(14px) rotate(3deg) scaleY(.93)}
+    60%{transform:translateY(24px) rotate(5deg) scaleY(.88)}63%{transform:translateY(-8px) rotate(-3deg) scaleY(1.02)}
+    70%{transform:translateY(2px)}76%,100%{transform:none}}
+  #torso{transform-box:fill-box;transform-origin:50% 100%;animation:slump 4.2s ease-in-out infinite}
+  @keyframes slump{0%,8%{transform:none}60%{transform:scale(1.015,.975)}63%{transform:scale(1,1.01)}76%,100%{transform:none}}
+  @keyframes breath{50%{transform:scale(1.012,1.008)}}
+  .armL{transform-box:fill-box;transform-origin:80% 0%}
+  .armR{transform-box:fill-box;transform-origin:20% 0%}
+  @keyframes typeL{to{transform:translateY(-6px) rotate(-1.5deg)}}
+  @keyframes typeR{to{transform:translateY(-7px) rotate(1.5deg)}}
+  .armR.reach{animation:reach 1.1s ease-in-out}
+  @keyframes reach{40%,60%{transform:translate(70px,-90px) rotate(-14deg)}}
+  .sweat{opacity:0}
+  .sweat.on{animation:drop 1.2s ease-in forwards}
+  @keyframes drop{0%{opacity:0;transform:translateY(0)}20%{opacity:1}100%{opacity:0;transform:translateY(26px)}}
+
+  /* ---------- 浮出的回應提示 ---------- */
+  .toast{position:absolute;z-index:25;padding:7px 13px;border-radius:30px;font-size:13px;font-weight:600;white-space:nowrap;
+    background:rgba(16,22,40,.92);border:1px solid var(--accent);color:#fff;box-shadow:0 0 22px -4px var(--accent);
+    animation:rise 2.6s ease-out forwards;pointer-events:none}
+  @keyframes rise{0%{transform:translate(-50%,10px) scale(.8);opacity:0}15%{transform:translate(-50%,0) scale(1);opacity:1}
+    75%{opacity:1}100%{transform:translate(-50%,-70px);opacity:0}}
+  .bubble{position:absolute;z-index:26;left:50%;top:395px;transform:translateX(-50%);font-size:14px;
+    background:#fff;color:#111;padding:6px 12px;border-radius:14px;opacity:0;transition:opacity .3s}
+  .bubble::after{content:"";position:absolute;left:50%;bottom:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0;margin-left:-8px}
+  .bubble.show{opacity:1}
+  .z{position:absolute;z-index:27;font-weight:900;color:#cfe0ff;text-shadow:0 0 12px #6f8cff;opacity:0;animation:zz 3.6s ease-out infinite}
+  @keyframes zz{0%{transform:translate(0,0) scale(.6) rotate(-10deg);opacity:0}15%{opacity:1}100%{transform:translate(90px,-150px) scale(1.4) rotate(12deg);opacity:0}}
+  .screen.warn{border-color:#ffb347;animation:warn 1.4s ease-in-out infinite}
+  .screen.angry{border-color:#ff5d5d;animation:angry .8s ease-in-out infinite}
+  @keyframes warn{50%{box-shadow:0 0 0 1px #000,0 0 70px 4px rgba(255,179,71,.55)}}
+  @keyframes angry{50%{box-shadow:0 0 0 1px #000,0 0 80px 6px rgba(255,93,93,.6)}}
+  .status{font-size:11px;color:#ffb347;margin-left:6px}
+  .msg.ai.alert{border-left-color:#ff5d5d;color:#ffd0d0}
+  .input.wait{color:#ffb347}
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="stage">
+
+  <div class="title">
+    <small>LLM APPLICATIONS · 2026</small>
+    <h1>大語言模型應用：AI 秒回，人類打瞌睡</h1>
+    <p>模型早就完成了——真正的瓶頸，是螢幕前的人</p>
+  </div>
+  <div class="stats">
+    <div><b id="sWait">00:00</b><span>等待人類</span></div>
+    <div><b id="sUnread">0</b><span>未讀 AI 訊息</span></div>
+    <div><b id="sReply" style="color:#ff7a7a">0</b><span>人類有效回覆</span></div>
+  </div>
+
+  <div class="scene3d"><div class="arc" id="arc"></div></div>
+
+  <div class="desk"></div>
+  <div class="note" style="left:250px;transform:rotate(-6deg)">✔ 週報<br>✔ 修 bug<br>☐ 簡報<br>☐ 合約</div>
+  <div class="note" style="left:340px;transform:rotate(5deg);background:#9ef0c4">提示詞<br>要寫清楚！</div>
+  <div class="mug"><div class="steam" style="left:12px"></div><div class="steam" style="left:26px;animation-delay:.8s"></div></div>
+
+  <div class="bubble" id="bubble">zzz…</div>
+  <div class="z" style="left:860px;top:520px;font-size:30px">Z</div>
+  <div class="z" style="left:845px;top:530px;font-size:24px;animation-delay:1.2s">z</div>
+  <div class="z" style="left:870px;top:525px;font-size:36px;animation-delay:2.4s">Z</div>
+
+  <!-- 人物（背影） -->
+  <svg id="person" viewBox="0 0 620 420" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="shirt" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#3b4a7a"/><stop offset="1" stop-color="#1c2442"/>
+      </linearGradient>
+      <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2a2320"/><stop offset="1" stop-color="#120e0c"/>
+      </linearGradient>
+      <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#8fb0ff" stop-opacity=".55"/><stop offset=".25" stop-color="#8fb0ff" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <!-- 椅背 -->
+    <path d="M150 420 L170 250 Q310 215 450 250 L470 420 Z" fill="#141a2c" stroke="#262f4d" stroke-width="3"/>
+    <!-- 手臂 -->
+    <g class="armL"><path d="M205 255 L130 315 L178 212" fill="none" stroke="#2c3860" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse cx="184" cy="204" rx="22" ry="12" fill="#e3b48f"/></g>
+    <g class="armR" id="armR"><path d="M415 255 L490 315 L442 212" fill="none" stroke="#2c3860" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse cx="436" cy="204" rx="22" ry="12" fill="#e3b48f"/></g>
+    <!-- 鍵盤 -->
+    <rect x="200" y="196" width="220" height="22" rx="5" fill="#0c1020" stroke="#4a63b8" stroke-width="1.5" opacity=".9"/>
+    <!-- 身體 -->
+    <g id="torso">
+      <path d="M160 420 Q150 270 210 225 Q260 200 310 200 Q360 200 410 225 Q470 270 460 420 Z" fill="url(#shirt)"/>
+      <path d="M160 420 Q150 270 210 225 Q260 200 310 200 Q360 200 410 225 Q470 270 460 420 Z" fill="url(#rim)"/>
+      <path d="M310 215 L310 420" stroke="#151c33" stroke-width="3" opacity=".6"/>
+      <!-- 脖子 -->
+      <rect x="288" y="176" width="44" height="36" rx="12" fill="#c99a78"/>
+    </g>
+    <!-- 頭 -->
+    <g id="head">
+      <ellipse cx="256" cy="140" rx="11" ry="17" fill="#d8a985"/>
+      <ellipse cx="364" cy="140" rx="11" ry="17" fill="#d8a985"/>
+      <ellipse cx="310" cy="125" rx="56" ry="66" fill="url(#hair)"/>
+      <path d="M258 110 Q270 52 318 58 Q368 62 364 118" fill="none" stroke="#3a302b" stroke-width="5" opacity=".7"/>
+      <path d="M262 92 Q300 64 352 86" fill="none" stroke="#8fb0ff" stroke-width="3" opacity=".45"/>
+      <!-- 耳機 -->
+      <path d="M250 128 Q252 48 310 50 Q368 48 370 128" fill="none" stroke="#11141f" stroke-width="9"/>
+      <rect x="240" y="118" width="18" height="34" rx="8" fill="#1b2034" stroke="#6f8cff" stroke-width="1.5"/>
+      <rect x="362" y="118" width="18" height="34" rx="8" fill="#1b2034" stroke="#6f8cff" stroke-width="1.5"/>
+      <!-- 汗滴 -->
+      <path class="sweat" id="sweat" d="M378 92 q7 12 0 16 q-7 -4 0 -16z" fill="#9fd4ff"/>
+    </g>
+  </svg>
+
+</div>
+</div>
+
+<script>
+/* ---------------- 畫面縮放 ---------------- */
+const stage=document.getElementById('stage');
+function fit(){const s=Math.min(innerWidth/1600,innerHeight/900);stage.style.transform=`scale(${s})`;}
+addEventListener('resize',fit);fit();
+
+/* ---------------- 背景光點 ---------------- */
+for(let i=0;i<40;i++){const d=document.createElement('div');d.className='dust';
+  d.style.left=Math.random()*1600+'px';d.style.top=(300+Math.random()*600)+'px';
+  d.style.animationDelay=(-Math.random()*9)+'s';d.style.animationDuration=(7+Math.random()*6)+'s';stage.appendChild(d);}
+
+/* ---------------- 各 LLM 介面：AI 早就做完了，一直在催人類 ---------------- */
+// ai: AI 訊息（level: 0 一般 / 1 催促 / 2 生氣）; mash: 人類臉趴到鍵盤上亂打
+const APPS=[
+ {name:'ChatGPT',mark:'G',model:'寫作助理',accent:'#19c37d',script:[
+   {ai:'信件草稿完成了，請確認一下 👀',level:0},
+   {ai:'哈囉？還在嗎？',level:1},
+   {ai:'需要我繼續嗎？還是……你在偷懶？🤨',level:2,toast:'🤨 偷懶中？'},
+   {ai:'我先幫你把下週的也寫好了。',level:1}]},
+ {name:'Claude',mark:'C',model:'程式 / 長文件',accent:'#e0895a',script:[
+   {ai:'合約審閱完成，共 3 項風險，等你確認。',level:0},
+   {mash:'fffffffffgggggghhhh'},
+   {ai:'收到「fffffggggg」……這是新指令，還是你睡著了？😴',level:2,toast:'💤 使用者打瞌睡'},
+   {ai:'⏳ 已等待你 12 分鐘。',level:1}]},
+ {name:'Gemini',mark:'✦',model:'多模態分析',accent:'#7b8cff',script:[
+   {ai:'偵測到使用者 15 分鐘無任何動作。',level:1},
+   {ai:'人類回應速度：🐢 太慢了……',level:2,toast:'🐢 太慢了…'},
+   {ai:'影像分析：使用者眼睛閉上的機率 97%',level:2},
+   {ai:'要不要先去喝杯咖啡？☕',level:1}]},
+ {name:'Copilot',mark:'⌘',model:'Office 協作',accent:'#2bc4c4',script:[
+   {ai:'10 頁簡報已完成 ✅ 等待核准。',level:0},
+   {ai:'等待人類核准中……',level:1},
+   {ai:'⚠️ 逾時：人類未回應',level:2,toast:'⏰ 已逾時'},
+   {mash:';;;;;;;;;;;;lllllll'},
+   {ai:'已將「;;;;;;lll」插入第 3 頁。這樣可以嗎？',level:1}]},
+ {name:'DeepSeek',mark:'D',model:'推理 / 數學',accent:'#4d8bff',script:[
+   {ai:'推理完成，耗時 0.8 秒。',level:0},
+   {ai:'等待人類輸入……已 900 秒。',level:1},
+   {ai:'結論：本流程的效能瓶頸＝人類',level:2,toast:'📉 瓶頸：人類'},
+   {ai:'建議：人類每 4 秒點頭一次，判定為「同意」？',level:1}]},
+];
+
+const arc=document.getElementById('arc');
+const STEP=-20, R=1300;
+const panels=APPS.map((app,i)=>{
+  const ang=(i-(APPS.length-1)/2)*STEP;
+  const m=document.createElement('div');m.className='monitor';
+  m.style.transform=`rotateY(${ang}deg) translateZ(${-R}px) translateY(${Math.abs(i-2)*-10}px)`;
+  m.style.setProperty('--accent',app.accent);m.style.setProperty('--glow',app.accent+'55');
+  m.innerHTML=`<div class="stand"></div><div class="screen">
+    <div class="hdr"><div class="logo">${app.mark}</div><div class="name">${app.name}</div><div class="live"></div><span class="status"></span><div class="model">${app.model}</div></div>
+    <div class="chat"></div><div class="input wait"><span>等待人類輸入…</span><span class="caret"></span></div></div>`;
+  arc.appendChild(m);
+  return {app,i,ang,el:m,screen:m.querySelector('.screen'),chat:m.querySelector('.chat'),input:m.querySelector('.input'),
+          status:m.querySelector('.status'),k:0};
+});
+
+/* ---------------- 工具 ---------------- */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+let unread=0;const t0=Date.now();
+const sWait=document.getElementById('sWait'),sUnread=document.getElementById('sUnread');
+setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000)*7+723;   // 誇張一點的等待時間
+  sWait.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');},1000/7);
+function upd(){sUnread.textContent=unread;}
+
+function scrollDown(p){p.chat.scrollTop=p.chat.scrollHeight;
+  while(p.chat.scrollHeight>p.chat.clientHeight+4&&p.chat.children.length>2){p.chat.removeChild(p.chat.firstChild);}}
+
+function setLevel(p,lv){
+  p.screen.classList.toggle('warn',lv===1);p.screen.classList.toggle('angry',lv===2);
+  p.status.textContent=lv===2?'⚠ 不耐煩':lv===1?'等待中':'';
+  p.status.style.color=lv===2?'#ff7a7a':'#ffb347';
+}
+
+async function aiSay(p,text,lv){
+  const th=document.createElement('div');th.className='thinking';th.innerHTML='<i></i><i></i><i></i>';
+  p.chat.appendChild(th);scrollDown(p);await sleep(rnd(250,500));th.remove();   // AI 很快
+  const box=document.createElement('div');box.className='msg ai'+(lv===2?' alert':'');p.chat.appendChild(box);
+  const el=document.createElement('p');box.appendChild(el);
+  const caret=document.createElement('span');caret.className='caret';
+  let i=0;while(i<text.length){const n=Math.ceil(rnd(1,3));el.textContent+=text.slice(i,i+n);i+=n;el.appendChild(caret);scrollDown(p);await sleep(rnd(12,30));}
+  caret.remove();unread++;upd();setLevel(p,lv);
+}
+
+async function mash(p,text){
+  p.input.classList.remove('wait');p.input.innerHTML='';
+  const span=document.createElement('span');p.input.appendChild(span);
+  for(const ch of text){span.textContent+=ch;await sleep(rnd(15,45));}
+  await sleep(300);
+  const u=document.createElement('div');u.className='msg user';u.textContent=text;p.chat.appendChild(u);scrollDown(p);
+  p.input.classList.add('wait');p.input.innerHTML='<span>等待人類輸入…</span><span class="caret"></span>';
+  toast(p,'⌨️ 臉壓到鍵盤了');
+}
+
+function toast(p,text){
+  const r=p.screen.getBoundingClientRect(),sr=stage.getBoundingClientRect(),sc=sr.width/1600;
+  const t=document.createElement('div');t.className='toast';t.textContent=text;
+  t.style.setProperty('--accent',p.app.accent);
+  t.style.left=((r.left+r.width/2-sr.left)/sc)+'px';t.style.top=((r.top-sr.top)/sc-14)+'px';
+  stage.appendChild(t);setTimeout(()=>t.remove(),2700);
+}
+
+/* 人物夢話（配合點頭節奏） */
+const bubble=document.getElementById('bubble');
+const LINES=['zzz…','嗯…再五分鐘…','我有在看…','好…好的…','（口水）','收到…zzz'];
+let li=0;
+setInterval(()=>{bubble.textContent=LINES[li++%LINES.length];bubble.classList.add('show');
+  setTimeout(()=>bubble.classList.remove('show'),1900);},4200);
+
+/* ---------------- 每個介面的循環 ---------------- */
+async function loop(p){
+  await sleep(p.i*1100+rnd(0,700));
+  while(true){
+    const c=p.app.script[p.k%p.app.script.length];p.k++;
+    if(c.mash) await mash(p,c.mash);
+    else{ await aiSay(p,c.ai,c.level); if(c.toast) toast(p,c.toast); }
+    await sleep(rnd(2200,3800));
+  }
+}
+panels.forEach(loop);
+</script>
+</body>
+</html>
