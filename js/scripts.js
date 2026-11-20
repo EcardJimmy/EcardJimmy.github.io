@@ -51,9 +51,10 @@ window.addEventListener('DOMContentLoaded', event => {
         });
     });
 
-    // Activate SimpleLightbox plugin for portfolio items
+    // Activate SimpleLightbox plugin for image portfolio items only
+    // (items without .lightbox link to their own pages, e.g. animations)
     new SimpleLightbox({
-        elements: '#portfolio a.portfolio-box'
+        elements: '#portfolio a.portfolio-box.lightbox'
     });
 
 });
