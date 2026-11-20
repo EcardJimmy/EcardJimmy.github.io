@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>辦公室擠牛奶</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;overflow:hidden;background:#e9dccb}
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1600px;height:900px;flex:none;transform-origin:center center}
+  svg{display:block;width:1600px;height:900px;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6ecdf"/><stop offset="1" stop-color="#ecdcc7"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8cc8f2"/><stop offset="1" stop-color="#d4ecfb"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c79a6b"/><stop offset="1" stop-color="#a87a4e"/>
+    </linearGradient>
+    <clipPath id="winClip"><rect x="110" y="110" width="420" height="250" rx="6"/></clipPath>
+    <clipPath id="cowBody"><ellipse cx="1180" cy="520" rx="222" ry="106"/></clipPath>
+    <clipPath id="cupInner"><rect x="-17" y="-24" width="34" height="50" rx="4"/></clipPath>
+  </defs>
+
+  <!-- 牆與地板 -->
+  <rect width="1600" height="900" fill="url(#wall)"/>
+  <rect x="0" y="780" width="1600" height="120" fill="url(#floor)"/>
+  <rect x="0" y="770" width="1600" height="12" fill="#e2cfb6"/>
+  <g stroke="#9a6f46" stroke-width="2" opacity=".35">
+    <line x1="0" y1="820" x2="1600" y2="820"/><line x1="0" y1="862" x2="1600" y2="862"/>
+  </g>
+
+  <!-- 窗戶 -->
+  <rect x="98" y="98" width="444" height="274" rx="10" fill="#fff"/>
+  <g clip-path="url(#winClip)">
+    <rect x="110" y="110" width="420" height="250" fill="url(#sky)"/>
+    <g id="clouds" fill="#fff" opacity=".95">
+      <g id="cloud1"><ellipse cx="0" cy="0" rx="46" ry="18"/><ellipse cx="-22" cy="-10" rx="22" ry="18"/><ellipse cx="16" cy="-14" rx="26" ry="20"/></g>
+      <g id="cloud2"><ellipse cx="0" cy="0" rx="36" ry="14"/><ellipse cx="-14" cy="-9" rx="18" ry="14"/><ellipse cx="12" cy="-11" rx="20" ry="15"/></g>
+    </g>
+    <path d="M110 360 L150 300 L190 330 L240 270 L300 320 L350 285 L410 330 L470 290 L530 330 L530 360 Z" fill="#9fd08a"/>
+    <path d="M110 360 L180 330 L260 345 L340 320 L430 345 L530 325 L530 360 Z" fill="#7cbc6a"/>
+  </g>
+  <line x1="320" y1="110" x2="320" y2="360" stroke="#fff" stroke-width="10"/>
+  <line x1="110" y1="235" x2="530" y2="235" stroke="#fff" stroke-width="8"/>
+
+  <!-- 時鐘 -->
+  <g transform="translate(1230 170)">
+    <circle r="52" fill="#fff" stroke="#3d3d4f" stroke-width="7"/>
+    <g stroke="#3d3d4f" stroke-width="4" stroke-linecap="round">
+      <line y1="-40" y2="-34"/><line y1="40" y2="34"/><line x1="-40" x2="-34"/><line x1="40" x2="34"/>
+    </g>
+    <line id="hourHand" y2="-22" stroke="#3d3d4f" stroke-width="6" stroke-linecap="round"/>
+    <line id="minHand" y2="-34" stroke="#3d3d4f" stroke-width="4" stroke-linecap="round"/>
+    <circle r="5" fill="#e0574f"/>
+  </g>
+
+  <!-- 書桌 -->
+  <rect x="290" y="560" width="480" height="22" rx="6" fill="#8b5e3c"/>
+  <rect x="310" y="582" width="16" height="190" fill="#6d4a2f"/>
+  <rect x="735" y="582" width="16" height="190" fill="#6d4a2f"/>
+  <rect x="560" y="582" width="180" height="110" rx="4" fill="#7a5235"/>
+  <rect x="640" y="625" width="24" height="6" rx="3" fill="#caa57f"/>
+  <!-- 盆栽 -->
+  <path d="M318 560 L328 510 L372 510 L382 560 Z" fill="#d9734f"/>
+  <g fill="#5fae5b"><ellipse cx="350" cy="488" rx="12" ry="30" transform="rotate(-25 350 510)"/>
+    <ellipse cx="350" cy="480" rx="12" ry="34"/><ellipse cx="350" cy="488" rx="12" ry="30" transform="rotate(28 350 510)"/></g>
+  <!-- 螢幕 -->
+  <rect x="505" y="528" width="20" height="32" fill="#3b3f52"/>
+  <rect x="470" y="552" width="90" height="10" rx="4" fill="#3b3f52"/>
+  <rect x="400" y="380" width="230" height="152" rx="10" fill="#2b2f40"/>
+  <rect x="410" y="390" width="210" height="132" rx="5" fill="#141a2b"/>
+  <g id="screenLines" stroke-linecap="round" stroke-width="6">
+    <line x1="424" y1="408" x2="540" y2="408" stroke="#7aa2ff"/>
+    <line x1="424" y1="426" x2="590" y2="426" stroke="#56607f"/>
+    <line x1="424" y1="444" x2="570" y2="444" stroke="#56607f"/>
+    <line x1="460" y1="468" x2="600" y2="468" stroke="#e0895a"/>
+    <line x1="424" y1="486" x2="560" y2="486" stroke="#56607f"/>
+  </g>
+  <rect id="cursor" x="424" y="498" width="8" height="14" fill="#9fe6b0"/>
+  <!-- 鍵盤 -->
+  <rect x="420" y="548" width="150" height="12" rx="3" fill="#d6d9e3"/>
+
+  <!-- 椅子 -->
+  <rect x="742" y="455" width="22" height="160" rx="8" fill="#33384d"/>
+  <rect x="742" y="598" width="178" height="20" rx="8" fill="#3f4560"/>
+  <rect x="820" y="618" width="14" height="110" fill="#565c75"/>
+  <path d="M760 740 L827 725 L900 740" stroke="#565c75" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <circle cx="760" cy="752" r="11" fill="#22263a"/><circle cx="900" cy="752" r="11" fill="#22263a"/>
+
+  <!-- ===== 乳牛 ===== -->
+  <g id="cowWrap" transform="translate(50 0)"><g id="cow">
+    <!-- 遠側的腿 -->
+    <rect x="1010" y="580" width="34" height="185" rx="12" fill="#d8d8d8"/>
+    <rect x="1335" y="580" width="34" height="185" rx="12" fill="#d8d8d8"/>
+    <rect x="1010" y="752" width="34" height="22" rx="5" fill="#4a4a4a"/>
+    <rect x="1335" y="752" width="34" height="22" rx="5" fill="#4a4a4a"/>
+    <!-- 尾巴 -->
+    <g id="tail">
+      <path d="M962 470 Q930 540 940 640" stroke="#f4f4f4" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <ellipse cx="940" cy="652" rx="13" ry="20" fill="#2b2b2b"/>
+    </g>
+    <!-- 身體 -->
+    <ellipse cx="1180" cy="520" rx="222" ry="106" fill="#fbfbfb" stroke="#2b2b2b" stroke-width="4"/>
+    <g clip-path="url(#cowBody)" fill="#2b2b2b">
+      <path d="M1000 430 Q1060 410 1090 460 Q1100 520 1040 530 Q990 520 990 470 Z"/>
+      <path d="M1180 420 Q1250 400 1280 440 Q1300 490 1240 500 Q1170 500 1170 460 Z"/>
+      <path d="M1120 560 Q1170 540 1200 580 Q1210 640 1140 640 Q1100 610 1120 560 Z"/>
+      <path d="M1330 520 Q1380 500 1410 540 Q1420 600 1360 600 Q1320 580 1330 520 Z"/>
+    </g>
+    <!-- 乳房 -->
+    <ellipse cx="1045" cy="626" rx="40" ry="27" fill="#f5a7b6" stroke="#d47f91" stroke-width="3"/>
+    <rect x="1022" y="642" width="11" height="24" rx="5" fill="#f08ea2"/>
+    <rect id="teat" x="1040" y="642" width="11" height="26" rx="5" fill="#f08ea2"/>
+    <rect x="1058" y="642" width="11" height="24" rx="5" fill="#f08ea2"/>
+    <!-- 近側的腿 -->
+    <rect x="975" y="580" width="38" height="190" rx="12" fill="#fbfbfb" stroke="#2b2b2b" stroke-width="3"/>
+    <rect x="1300" y="580" width="38" height="190" rx="12" fill="#fbfbfb" stroke="#2b2b2b" stroke-width="3"/>
+    <rect x="975" y="756" width="38" height="20" rx="5" fill="#2b2b2b"/>
+    <rect x="1300" y="756" width="38" height="20" rx="5" fill="#2b2b2b"/>
+    <!-- 脖子與頭 -->
+    <path d="M1340 450 Q1380 420 1405 430 L1425 500 Q1390 540 1360 530 Z" fill="#fbfbfb" stroke="#2b2b2b" stroke-width="4"/>
+    <g id="cowHead">
+      <path d="M1388 372 Q1378 345 1392 330" stroke="#efe2c4" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <path d="M1440 370 Q1452 343 1440 328" stroke="#efe2c4" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <ellipse cx="1360" cy="398" rx="28" ry="13" fill="#fbfbfb" stroke="#2b2b2b" stroke-width="3" transform="rotate(-20 1360 398)"/>
+      <ellipse cx="1474" cy="394" rx="28" ry="13" fill="#fbfbfb" stroke="#2b2b2b" stroke-width="3" transform="rotate(20 1474 394)"/>
+      <ellipse cx="1416" cy="425" rx="58" ry="62" fill="#fbfbfb" stroke="#2b2b2b" stroke-width="4"/>
+      <path d="M1380 380 Q1410 370 1420 400 Q1400 420 1378 405 Z" fill="#2b2b2b"/>
+      <g id="cowEyes">
+        <ellipse cx="1398" cy="425" rx="7" ry="9" fill="#2b2b2b"/>
+        <ellipse cx="1440" cy="425" rx="7" ry="9" fill="#2b2b2b"/>
+        <circle cx="1400" cy="422" r="2.5" fill="#fff"/><circle cx="1442" cy="422" r="2.5" fill="#fff"/>
+      </g>
+      <g id="muzzle">
+        <ellipse cx="1420" cy="470" rx="48" ry="30" fill="#f5b3bf" stroke="#2b2b2b" stroke-width="4"/>
+        <ellipse cx="1402" cy="465" rx="6" ry="8" fill="#a85b6a"/><ellipse cx="1438" cy="465" rx="6" ry="8" fill="#a85b6a"/>
+        <path id="cowMouth" d="M1405 486 Q1420 492 1435 486" stroke="#a85b6a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </g>
+      <!-- 鈴鐺 -->
+      <path d="M1385 512 Q1400 500 1418 515" stroke="#c0392b" stroke-width="6" fill="none"/>
+      <path d="M1388 520 Q1402 505 1416 520 L1420 540 L1384 540 Z" fill="#f2c94c" stroke="#b8901f" stroke-width="2"/>
+    </g>
+  </g></g>
+
+  <!-- 牛奶流 -->
+  <line id="stream" x1="1095" y1="670" x2="1095" y2="700" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-dasharray="14 8" opacity="0"/>
+
+  <!-- ===== 人物（面向右） ===== -->
+  <g id="person">
+    <!-- 後方手臂（拿杯子） -->
+    <path id="armBack" d="" stroke="#6f98cc" stroke-width="24" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- 杯子 -->
+    <g id="cup">
+      <rect x="-21" y="-28" width="42" height="56" rx="6" fill="#ffffff" fill-opacity=".55" stroke="#8aa0b8" stroke-width="3"/>
+      <g clip-path="url(#cupInner)"><rect id="milk" x="-17" y="26" width="34" height="0" fill="#fffdf7"/>
+        <rect id="milkTop" x="-17" y="26" width="34" height="4" fill="#efe6d2"/></g>
+      <path d="M21 -14 Q38 -14 38 0 Q38 14 21 14" stroke="#8aa0b8" stroke-width="5" fill="none"/>
+      <text x="0" y="6" text-anchor="middle" font-size="13" font-weight="700" fill="#6c86a6" opacity=".7">MILK</text>
+    </g>
+    <circle id="handBack" r="13" fill="#e9b892"/>
+    <!-- 腿 -->
+    <path d="M805 600 L930 606" stroke="#2f3a56" stroke-width="46" stroke-linecap="round"/>
+    <path d="M930 606 L938 755" stroke="#2f3a56" stroke-width="40" stroke-linecap="round"/>
+    <ellipse cx="960" cy="768" rx="34" ry="13" fill="#3b2a20"/>
+    <!-- 身體 -->
+    <path d="M790 612 Q782 540 822 504 L888 504 Q910 548 880 612 Z" fill="#8fb8ea"/>
+    <path d="M884 512 L874 520 L880 585 L888 595 L896 585 Z" fill="#d9534f"/>
+    <path d="M874 506 L886 520 L898 506 Z" fill="#fff"/>
+    <!-- 頭 -->
+    <g id="head">
+      <rect x="860" y="474" width="24" height="34" rx="8" fill="#e9b892"/>
+      <circle cx="884" cy="440" r="47" fill="#f1c6a0"/>
+      <path d="M838 450 Q832 392 884 390 Q934 390 932 428 Q904 412 872 424 Q862 444 858 474 Q842 470 838 450 Z" fill="#4a3426"/>
+      <ellipse cx="864" cy="450" rx="9" ry="13" fill="#e9b892"/>
+      <path d="M902 422 Q912 418 922 422" stroke="#4a3426" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="912" cy="440" r="4.5" fill="#2b2b2b" id="eye"/>
+      <circle cx="912" cy="440" r="14" fill="none" stroke="#333" stroke-width="3"/>
+      <line x1="898" y1="438" x2="868" y2="436" stroke="#333" stroke-width="3"/>
+      <path d="M929 446 Q938 456 928 460" stroke="#d29a76" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path id="mouth" d="M906 474 Q916 480 925 473" stroke="#8a4b3a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path id="mustache" d="M904 468 Q912 460 920 466 Q928 460 934 468 Q930 474 920 471 Q910 476 904 468 Z" fill="#fffef6" stroke="#e8e1cf" stroke-width="1" opacity="0"/>
+      <ellipse cx="896" cy="460" rx="10" ry="6" fill="#f3a39a" opacity=".45"/>
+    </g>
+    <!-- 前方手臂（擠奶） -->
+    <path id="armFront" d="" stroke="#8fb8ea" stroke-width="24" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle id="handFront" r="13" fill="#f1c6a0"/>
+  </g>
+
+  <!-- 對話泡泡 -->
+  <g id="bubbleCow" opacity="0">
+    <rect x="1290" y="262" width="120" height="58" rx="26" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>
+    <path d="M1380 318 L1400 344 L1360 319" fill="#fff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="1362" y="314" width="20" height="6" fill="#fff"/>
+    <text x="1350" y="301" text-anchor="middle" font-size="26" font-weight="800" fill="#2b2b2b">哞～</text>
+  </g>
+  <g id="bubbleMan" opacity="0">
+    <rect x="930" y="300" width="170" height="60" rx="26" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>
+    <path d="M948 358 L935 382 L968 359" fill="#fff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="946" y="354" width="26" height="6" fill="#fff"/>
+    <text id="manText" x="1015" y="340" text-anchor="middle" font-size="26" font-weight="800" fill="#2b2b2b">啊～讚！</text>
+  </g>
+  <g id="hearts" fill="#ef6b7b" opacity="0">
+    <path d="M0 6 C-14 -6 -6 -18 0 -9 C6 -18 14 -6 0 6Z" transform="translate(1415 330) scale(1.4)"/>
+    <path d="M0 6 C-14 -6 -6 -18 0 -9 C6 -18 14 -6 0 6Z" transform="translate(1385 300)"/>
+  </g>
+</svg>
+</div></div>
+
+<script>
+/* 縮放 */
+const stage=document.getElementById('stage');
+function fit(){stage.style.transform=`scale(${Math.min(innerWidth/1600,innerHeight/900)})`;}
+addEventListener('resize',fit);fit();
+
+const $=id=>document.getElementById(id);
+const LOOP=10;                       // 一次循環 10 秒
+const L1=162,L2=162;                 // 手臂長度
+const SH_BACK={x:878,y:512}, SH_FRONT={x:862,y:516};
+const P={desk:{x:690,y:532}, udder:{x:1095,y:726}, mouth:{x:936,y:470},
+         rest:{x:955,y:598}, teat:{x:1096,y:660}};
+
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const prog=(t,a,b)=>ease(clamp((t-a)/(b-a)));
+const lerp=(a,b,k)=>a+(b-a)*k;
+const lp=(p,q,k)=>({x:lerp(p.x,q.x,k),y:lerp(p.y,q.y,k)});
+
+function ik(sh,hand){            // 兩節手臂，手肘朝下
+  let dx=hand.x-sh.x,dy=hand.y-sh.y,d=Math.hypot(dx,dy);
+  d=Math.min(d,L1+L2-1);
+  const a=Math.atan2(dy,dx), off=Math.acos(clamp((L1*L1+d*d-L2*L2)/(2*L1*d),-1,1));
+  const e1={x:sh.x+L1*Math.cos(a+off),y:sh.y+L1*Math.sin(a+off)};
+  const e2={x:sh.x+L1*Math.cos(a-off),y:sh.y+L1*Math.sin(a-off)};
+  const hint={x:sh.x+25,y:sh.y+150};
+  const e=Math.hypot(e1.x-hint.x,e1.y-hint.y)<Math.hypot(e2.x-hint.x,e2.y-hint.y)?e1:e2;
+  return `M${sh.x} ${sh.y} L${e.x.toFixed(1)} ${e.y.toFixed(1)} L${hand.x.toFixed(1)} ${hand.y.toFixed(1)}`;
+}
+
+function render(T){
+  const t=((T%LOOP)+LOOP)%LOOP;
+
+  /* --- 杯子手 --- */
+  let cup, tilt=0, fill=0;
+  if(t<0.8) cup=P.desk;
+  else if(t<2.0) cup=lp(P.desk,P.udder,prog(t,0.8,2.0));
+  else if(t<6.0) cup=P.udder;
+  else if(t<7.0) cup=lp(P.udder,P.mouth,prog(t,6.0,7.0));
+  else if(t<8.6) cup=P.mouth;
+  else if(t<9.6) cup=lp(P.mouth,P.desk,prog(t,8.6,9.6));
+  else cup=P.desk;
+  tilt = t<6.3?0 : t<7.0? -55*prog(t,6.3,7.0) : t<8.6? -55-15*prog(t,7.0,8.4) : -70*(1-prog(t,8.6,9.4));
+  // 喝的時候微微吞嚥晃動
+  let sip = (t>7.0&&t<8.4)? Math.sin((t-7)*14)*3 : 0;
+  const cupPos={x:cup.x, y:cup.y+sip};
+
+  /* --- 擠奶手 --- */
+  let squeeze=0, hf;
+  if(t<2.0) hf=P.rest;
+  else if(t<2.5) hf=lp(P.rest,P.teat,prog(t,2.0,2.5));
+  else if(t<6.0){ squeeze=(1-Math.cos((t-2.5)*2*Math.PI/0.45))/2; hf={x:P.teat.x,y:P.teat.y+squeeze*12}; }
+  else if(t<6.5) hf=lp(P.teat,P.rest,prog(t,6.0,6.5));
+  else hf=P.rest;
+
+  /* --- 牛奶量 --- */
+  if(t>=2.5&&t<6.0) fill=0.88*clamp((t-2.6)/3.3);
+  else if(t>=6.0&&t<7.0) fill=0.88;
+  else if(t>=7.0&&t<8.4) fill=0.88*(1-prog(t,7.0,8.4));
+  const h=50*fill;
+  $('milk').setAttribute('y',26-h);$('milk').setAttribute('height',h);
+  $('milkTop').setAttribute('y',26-h);$('milkTop').setAttribute('opacity',fill>0.02?1:0);
+
+  $('cup').setAttribute('transform',`translate(${cupPos.x} ${cupPos.y}) rotate(${tilt})`);
+  $('handBack').setAttribute('cx',cupPos.x-24);$('handBack').setAttribute('cy',cupPos.y+4);
+  $('armBack').setAttribute('d',ik(SH_BACK,{x:cupPos.x-24,y:cupPos.y+4}));
+  $('handFront').setAttribute('cx',hf.x);$('handFront').setAttribute('cy',hf.y);
+  $('armFront').setAttribute('d',ik(SH_FRONT,hf));
+
+  /* --- 乳頭與奶流 --- */
+  $('teat').setAttribute('height',26+squeeze*10);
+  const streamOn=(t>2.6&&t<6.0)?clamp(squeeze*1.6-0.2):0;
+  const st=$('stream');
+  st.setAttribute('y1',668+squeeze*10);st.setAttribute('y2',cupPos.y-24+(50-h));
+  st.setAttribute('opacity',streamOn);st.setAttribute('stroke-dashoffset',(-t*260).toFixed(1));
+
+  /* --- 頭部 --- */
+  let headRot = t<6.3?Math.sin(t*1.3)*1.5 : t<8.6? -12*prog(t,6.3,7.0) : -12*(1-prog(t,8.6,9.2));
+  if(t>8.6&&t<9.6) headRot += Math.sin((t-8.6)*10)*2;     // 滿足地搖頭
+  $('head').setAttribute('transform',`rotate(${headRot.toFixed(2)} 872 500)`);
+  const drinking=t>7.0&&t<8.4;
+  $('mouth').setAttribute('d',drinking?'M908 470 Q916 482 926 470 Z':(t>8.4&&t<9.8)?'M904 470 Q916 488 928 469':'M906 474 Q916 480 925 473');
+  $('mustache').setAttribute('opacity',t<8.4?0:t<9.4?1:1-prog(t,9.4,10));
+  $('eye').setAttribute('ry',4.5);
+  const blinkMan=(t%3.3)<0.12; $('eye').setAttribute('r',blinkMan?1.5:4.5);
+
+  /* --- 乳牛 --- */
+  $('tail').setAttribute('transform',`rotate(${(Math.sin(t*2*Math.PI/2.5)*16).toFixed(2)} 962 470)`);
+  $('muzzle').setAttribute('transform',`translate(${(Math.sin(t*2*Math.PI/1.25)*3).toFixed(2)} ${(Math.abs(Math.sin(t*2*Math.PI/1.25))*3).toFixed(2)})`);
+  const blinkCow=((t+1.1)%2.5)<0.15;
+  $('cowEyes').setAttribute('transform',blinkCow?'translate(0 425) scale(1 .15) translate(0 -425)':'');
+  const moo=t>3.0&&t<4.7;
+  $('cowHead').setAttribute('transform',moo?`rotate(${(-6*Math.sin(clamp((t-3)/1.7)*Math.PI)).toFixed(2)} 1400 470)`:'');
+  $('cowMouth').setAttribute('d',moo?'M1405 482 Q1420 500 1435 482 Z':'M1405 486 Q1420 492 1435 486');
+  $('bubbleCow').setAttribute('opacity',moo?1:0);
+
+  /* --- 對話泡泡、愛心 --- */
+  $('bubbleMan').setAttribute('opacity',(t>8.5&&t<9.9)?1:0);
+  const hk=(t>8.6&&t<10)?(t-8.6)/1.4:-1;
+  $('hearts').setAttribute('opacity',hk<0?0:(1-hk));
+  $('hearts').setAttribute('transform',`translate(0 ${hk<0?0:(-40*hk).toFixed(1)})`);
+
+  /* --- 背景 --- */
+  $('cloud1').setAttribute('transform',`translate(${(200+Math.sin(t*2*Math.PI/LOOP)*40).toFixed(1)} 160)`);
+  $('cloud2').setAttribute('transform',`translate(${(430-Math.sin(t*2*Math.PI/LOOP)*30).toFixed(1)} 195)`);
+  $('minHand').setAttribute('transform',`rotate(${(t/LOOP*360).toFixed(1)})`);
+  $('hourHand').setAttribute('transform',`rotate(${(120+t/LOOP*30).toFixed(1)})`);
+  $('cursor').setAttribute('opacity',(t%1)<0.5?1:0);
+}
+window.renderAt=render;
+
+/* 自動播放（錄影時改用 renderAt 逐格繪製） */
+if(!location.hash.includes('manual')){
+  const t0=performance.now();
+  (function loop(now){render((now-t0)/1000);requestAnimationFrame(loop);})(t0);
+}else render(0);
+</script>
+</body>
+</html>
